@@ -1,78 +1,52 @@
-"""API-тесты для публичного сервиса jsonplaceholder.typicode.com."""
+"""API-тесты для публичного REST API Википедии."""
 import allure
 import pytest
 
-from api.client import JsonPlaceholderClient
-from data import api_data
+from api.wiki_client import WikipediaClient
 
 
 pytestmark = [pytest.mark.api]
 
 
-@allure.feature("Посты")
+@allure.feature("Статьи")
 @allure.severity(allure.severity_level.NORMAL)
-@allure.title("Получение списка постов")
-def test_list_posts(api_client: JsonPlaceholderClient):
-    with allure.step("Запросить список постов"):
-        response = api_client.list_posts()
+@allure.title("Поиск (Action API) возвращает результаты")
+def test_search_title(api_client: WikipediaClient):
+    query = "Тестирование"
+    with allure.step("Запросить поиск через Action API"):
+        response = api_client.action_search(query, limit=10)
 
-    with allure.step("Проверить статус и наличие элементов"):
+    with allure.step("Проверить статус и наличие результатов"):
         assert response.status_code == 200
         body = response.json()
-        assert isinstance(body, list) and len(body) >= 100, "Список постов пуст или укорочен"
+        search = body.get("query", {}).get("search", [])
+        assert isinstance(search, list) and len(search) > 0
 
 
-@allure.feature("Посты")
+@allure.feature("Статьи")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.title("Получение поста по id")
-def test_get_post(api_client: JsonPlaceholderClient):
-    post_id = 1
-    with allure.step("Запросить пост по id"):
-        response = api_client.get_post(post_id)
+@allure.title("Получение краткого описания статьи")
+def test_get_summary(api_client: WikipediaClient):
+    title = "Тестирование программного обеспечения"
+    with allure.step("Запросить summary статьи"):
+        response = api_client.summary(title)
 
     with allure.step("Проверить корректность данных"):
         assert response.status_code == 200
         data = response.json()
-        assert data.get("id") == post_id, "ID поста не совпадает"
-        assert data.get("title"), "Нет заголовка"
-        assert data.get("body"), "Нет текста"
+        assert data.get("title") and title in data.get("title")
+        assert data.get("extract"), "Нет краткого описания"
 
 
-@allure.feature("Посты")
+@allure.feature("Статьи")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.title("Создание поста")
-def test_create_post(api_client: JsonPlaceholderClient):
-    with allure.step("Создать пост"):
-        response = api_client.create_post(api_data.create_post_payload)
+@allure.title("Получение случайной статьи")
+def test_random_summary(api_client: WikipediaClient):
+    with allure.step("Запросить случайную статью"):
+        response = api_client.random_summary()
 
     with allure.step("Проверить ответ"):
-        assert response.status_code == 201
-        body = response.json()
-        assert body.get("title") == api_data.create_post_payload["title"]
-        assert body.get("body") == api_data.create_post_payload["body"]
-        assert body.get("id"), "В ответе нет id"
-
-
-@allure.feature("Посты")
-@allure.severity(allure.severity_level.NORMAL)
-@allure.title("Обновление поста")
-def test_update_post(api_client: JsonPlaceholderClient):
-    with allure.step("Обновить пост"):
-        response = api_client.update_post(1, api_data.update_post_payload)
-
-    with allure.step("Проверить обновлённые поля"):
         assert response.status_code == 200
         body = response.json()
-        assert body.get("title") == api_data.update_post_payload["title"]
-        assert body.get("body") == api_data.update_post_payload["body"]
-
-
-@allure.feature("Посты")
-@allure.severity(allure.severity_level.MINOR)
-@allure.title("Удаление поста")
-def test_delete_post(api_client: JsonPlaceholderClient):
-    with allure.step("Удалить пост"):
-        response = api_client.delete_post(1)
-
-    with allure.step("Проверить код ответа"):
-        assert response.status_code in (200, 204)
+        assert body.get("title")
+        assert body.get("extract")

@@ -20,9 +20,9 @@ def _as_int(value: str | None, default: int) -> int:
 class Settings:
     """Конфигурация приложения."""
 
-    ui_base_url: str = os.getenv("UI_BASE_URL", "https://www.saucedemo.com/")
+    ui_base_url: str = os.getenv("UI_BASE_URL", "https://ru.wikipedia.org/")
     api_base_url: str = os.getenv(
-        "API_BASE_URL", "https://jsonplaceholder.typicode.com"
+        "API_BASE_URL", "https://ru.wikipedia.org/api/rest_v1"
     )
     browser: str = os.getenv("BROWSER", "chrome").lower()
     headless: bool = _as_bool(os.getenv("HEADLESS"), True)
