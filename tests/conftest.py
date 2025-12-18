@@ -17,7 +17,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from config.settings import settings
-from api.client import JsonPlaceholderClient
+from api.wiki_client import WikipediaClient
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -43,9 +43,12 @@ def driver(request: pytest.FixtureRequest, app_settings):
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        service = ChromeService(ChromeDriverManager().install())
-        with allure.step("Запуск Chrome"):
-            drv = webdriver.Chrome(service=service, options=options)
+        try:
+            service = ChromeService(ChromeDriverManager().install())
+            with allure.step("Запуск Chrome"):
+                drv = webdriver.Chrome(service=service, options=options)
+        except Exception as e:
+            pytest.skip(f"Не удалось установить ChromeDriver: {e}")
     elif browser == "firefox":
         options = FirefoxOptions()
         if headless:
@@ -63,6 +66,6 @@ def driver(request: pytest.FixtureRequest, app_settings):
 
 
 @pytest.fixture(scope="session")
-def api_client() -> JsonPlaceholderClient:
-    """Клиент JSONPlaceholder с общей сессией."""
-    return JsonPlaceholderClient()
+def api_client() -> WikipediaClient:
+    """Клиент REST Wikipedia с общей сессией."""
+    return WikipediaClient()
